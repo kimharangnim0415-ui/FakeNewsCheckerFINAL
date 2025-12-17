@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Fake News Checker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    h1 { color: #333; margin-bottom: 30px; }
+
+    form {
+      background-color: #fff;
+      padding: 30px 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      resize: vertical;
+    }
+
+    button {
+      padding: 15px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover { background-color: #45a049; }
+
+    #result {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      width: 500px;
+      word-break: break-word;
+      min-height: 60px;
+    }
+
+    #overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      z-index: 1000;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Fake News Checker</h1>
+
+<form id="newsForm">
+  <input type="text" name="title" placeholder="뉴스 제목" required>
+  <textarea name="content" rows="8" placeholder="뉴스 내용" required></textarea>
+  <button type="submit">판별하기</button>
+</form>
+
+<div id="result"></div>
+<div id="overlay"><span id="overlay-text">판별 중</span></div>
+
+<script>
+  const form = document.getElementById('newsForm');
+  const resultEl = document.getElementById('result');
+  const overlay = document.getElementById('overlay');
+  const overlayText = document.getElementById('overlay-text');
+
+  let dotInterval;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const data = { title: formData.get('title'), content: formData.get('content') };
+
+    overlay.style.display = 'flex';
+    let dots = '';
+    dotInterval = setInterval(() => {
+      dots = dots.length < 3 ? dots + '.' : '';
+      overlayText.textContent = '판별 중' + dots;
+    }, 500);
+
+    try {
+      const response = await fetch('/check-news', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+      resultEl.textContent = result.result;
+    } catch (err) {
+      console.error(err);
+      resultEl.textContent = "서버 오류 발생";
+    } finally {
+      clearInterval(dotInterval);
+      overlay.style.display = 'none';
+      overlayText.textContent = '판별 중';
+    }
+  });
+</script>
+
+</body>
+</html>
